@@ -20,29 +20,29 @@ export  const updateRoleToEducator = async (req,res)=>{
         res.json({ success: false, message: error.message })
     }
 }
-// //ADD course
+//ADD course
 
-// export const addCourse = async (req,res)=> {
-//     try {
-//         const {courseData} = req.body
-//         const imageFile = req.file
-//         const educatorId = req.auth.userId
+export const addCourse = async (req,res)=> {
+    try {
+        const {courseData} = req.body
+        const imageFile = req.file
+        const educatorId = req.auth.userId
 
-//         if (!imageFile){
-//             return res.json({ success: false, message: 'Thumbnail not Attached '})
-//         }
-//         const parsedCourseData = await JSON.parse(courseData)
-//         parsedCourseData.educator = educatorId
-//         const newCourse = await Course.create(parsedCourseData)
-//         const imageUpload = await cloudinary.uploader.upload(imageFile.path)
-//         newCourse.courseThumbnail = imageUpload.secure_url
-//         await newCourse.save()
+        if (!imageFile){
+            return res.json({ success: false, message: 'Thumbnail not Attached '})
+        }
+        const parsedCourseData = await JSON.parse(courseData)
+        parsedCourseData.educator = educatorId
+        const newCourse = await Course.create(parsedCourseData)
+        const imageUpload = await cloudinary.uploader.upload(imageFile.path)
+        newCourse.courseThumbnail = imageUpload.secure_url
+        await newCourse.save()
 
-//         res.json({ success: true, message: "Course Added"})
-//     } catch (error){
-//         res.json({ success: false, message: error.message})
-//     }
-// }
+        res.json({ success: true, message: "Course Added"})
+    } catch (error){
+        res.json({ success: false, message: error.message})
+    }
+}
 
 // //Get educator courses
 
