@@ -10,8 +10,7 @@ const PurchaseSchema = new mongoose.Schema({
         ref: 'User',
         required: true
     },
-    //changed required should be true
-    amount: {type: Number, required: false},
+    amount: {type: Number, required: true},
     status: {type: String, enum: ['pending','completed','failed'],default: 'pending'}
 
 },{timestamps : true}

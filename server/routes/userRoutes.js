@@ -1,16 +1,17 @@
 import express from 'express'
-import { getUserData, userEnrolledCourses, enrollCourse, getUserCourseProgress, updateUserCourseProgress, addUserRating } from '../controllers/userController.js'
-
+import { getUserData, userEnrolledCourses, getUserCourseProgress, updateUserCourseProgress, addUserRating, purchaseCourse } from '../controllers/userController.js'
+import Stripe from "stripe"
 const userRouter = express.Router()
 
 userRouter.get('/data',getUserData)
 userRouter.get('/enrolled-courses',userEnrolledCourses)
+userRouter.post('/purchase', purchaseCourse)
 userRouter.post('/update-course-progress',updateUserCourseProgress)
 userRouter.post('/get-course-progress',getUserCourseProgress)
 userRouter.post('/add-rating', addUserRating)
 
-//change shamsan part
-userRouter.post('/enroll', enrollCourse)
+// //change shamsan part
+// userRouter.post('/enroll', enrollCourse)
 
 export default userRouter
 
