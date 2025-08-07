@@ -19,11 +19,16 @@ export const  getAllCourses = async( req,res) => {
 //Course by id
 
 export const getCourseId = async (req,res)=> {
+
     const {id} = req.params
+
+
     try {
-        const courseData = await Course.findById(id).populate({path:'educator'})
+        // const courseData = await Course.findById(id).populate({path:'educator'})
     
         //remove lectureURL if isPreviewFree == Flase
+        const courseData = await Course.findById(id).populate({path:'educator'})
+        
         courseData.courseContent.forEach(chapter => {
             chapter.chapterContent.forEach(lecture => {
                 if (!lecture.isPreviewFree){ 
@@ -34,7 +39,7 @@ export const getCourseId = async (req,res)=> {
 
         res.json({success: true, courseData})
     } catch (error) {
-        res.json({success: false, message: error.message})
+        res.json({success: false, message: error.message, courseData})
         
     }
 }

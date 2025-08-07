@@ -7,6 +7,8 @@ import Course from "../models/Course.js";
 //ApI controller to manage Clerk user
 
 export const clerkWebhooks = async (req,res) => {
+
+
     try {
         const whook = new Webhook(process.env.CLERK_WEBHOOK_SECRET)
 
@@ -21,6 +23,7 @@ export const clerkWebhooks = async (req,res) => {
 
         switch (type) {
             case 'user.created': {
+                // console.log('Clerk User Created Event Received:', data);
                 const userData = {
                     _id: data.id,
                     email: data.email_addresses[0].email_address,
@@ -29,10 +32,11 @@ export const clerkWebhooks = async (req,res) => {
                 }
                 await User.create(userData)
                 res.json({})
-                break
+                break;
             }
                 
             case 'user.updated': {
+                // console.log('Clerk User Created Event Received:', data);
                 const userData = {
                     email: data.email_addresses[0].email_address,//POSSIBLE ISSUE WITH ADRESS VS ADRESSES
                     name: data.first_name + " " + data.last_name,
@@ -44,12 +48,13 @@ export const clerkWebhooks = async (req,res) => {
             }
 
             case 'user.deleted': {
+                // console.log('Clerk User Created Event Received:', data);
                 await User.findByIdAndDelete(data.id)
                 res.json({})
                 break
             }            
-
-        
+            
+   
             default:
                 break;
         }
@@ -94,6 +99,7 @@ export const stripeWebhooks = async(request,response) => {
 
       const purchaseData = await Purchase.findById(purchaseId)
       const userData = await User.findById(purchaseData.userId)
+      console.log(userData)
       const courseData = await Course.findById(purchaseData.courseId.toString())
 
       courseData.enrolledStudents.push(userData)

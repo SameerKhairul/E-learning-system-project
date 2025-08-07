@@ -14,7 +14,7 @@ const Player = () => {
 
 const {enrolledCourses, calculateChapterTime, backendUrl, getToken, userData, fetchUserEnrolledCourses} = useContext(AppContext)
 const {courseId} = useParams()
-console.log(courseId)
+
 
 const [courseData, setCourseData] = useState(null)
 const [openSections, setOpenSections] = useState({})
@@ -26,7 +26,6 @@ const getCourseData = ()=> {
   
   enrolledCourses.map((course)=>{
     if(course._id === courseId){
-      console.log(course)
       setCourseData(course)
       course.courseRatings.map((item) => {
         if(item.userId === userData._id){
@@ -71,7 +70,9 @@ const getCourseProgress = async () => {
     const token = await getToken();
     const {data} = await axios.post(`${backendUrl}/api/user/get-course-progress`, {courseId}, {headers: {Authorization: `Bearer ${token}`}})
     if (data.success) {
+      console.log(data.progressData)
       setProgressData(data.progressData);
+
     } else {
       toast.error(data.message || 'Failed to fetch course progress')
     }
@@ -121,6 +122,7 @@ const getCourseProgress = async () => {
                       <ul className='list-disc md:pl-10 pl-4 pr-4 py-2 text-gray-600 border-t border-gray-300'>
                         {chapter.chapterContent.map((lecture,i)=> (
                           <li key={i} className='flex items-start gap-2 py-1'>
+
                             <img src={progressData && progressData.markLectureAsCompleted.includes(lecture.lectureId) ? assets.blue_tick_icon : assets.play_icon} 
                           alt="play_icon" className='w-4 h-4 mt-1' />
                           <div className='flex items-center justify-between w-full text-gray-800 text-xs md:text-default'>

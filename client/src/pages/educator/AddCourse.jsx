@@ -112,6 +112,7 @@ const AddCourse = () => {
 
       const token = await getToken()
       const {data} = await axios.post(`${backendUrl}/api/educator/add-course`, formData, {headers: {Authorization: `Bearer ${token}`}})
+      console.log(data)
       if (data.success) {
         toast.success('Course added successfully')
         setCourseTitle('')
@@ -143,7 +144,7 @@ const AddCourse = () => {
       <form onSubmit={handleSubmit} className='flex flex-col gap-4 max-w-md w-full text-gray-500'>
         <div className='flex flex-col gap-1'>
           <p>Course Title</p>
-          <input type="text" placeholder='Type here' className='outline-none md:py-2.5 py-2 px-3 rounded border border-gray-500' required />
+          <input onChange={e => setCourseTitle(e.target.value)} value={courseTitle} type="text" placeholder='Type here' className='outline-none md:py-2.5 py-2 px-3 rounded border border-gray-500' required />
         </div>
         <div className='flex-flex-col gap-1'>
           <p>Course Description</p>
@@ -204,7 +205,7 @@ const AddCourse = () => {
           {showPopup && (
             <div className='fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-50'>
               <div className='bg-white text-gray-700 p-4 rounded relative w-full max-w-80'>
-                <h2 className='text-lg font-semibold' mb-4>Add Lecture</h2>
+                <h2 className='text-lg font-semibold mb-4'>Add Lecture</h2>
                 <div className='mb-2'>
                   <p>Lecture Title</p>
                   <input type="text" className='mt-1 block w-full border rounded py-1 px-2' value={lectureDetails.lectureTitle}
@@ -217,8 +218,8 @@ const AddCourse = () => {
                 </div>
                 <div className='mb-2'>
                   <p>Lecture URL</p>
-                  <input type="text" className='mt-1 block w-full border rounded py-1 px-2' value={lectureDetails.lectureURL}
-                  onChange={(e) => setLectureDetails({ ...lectureDetails, lectureURL: e.target.value})} />
+                  <input type="text" className='mt-1 block w-full border rounded py-1 px-2' value={lectureDetails.lectureUrl}
+                  onChange={(e) => setLectureDetails({ ...lectureDetails, lectureUrl: e.target.value})} />
                 </div>
                 <div className='flex gap-2 my-4'>
                   <p>Is Preview Free?</p>

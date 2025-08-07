@@ -1,4 +1,4 @@
-import { CourseProgress } from "../models/courseProgress.js"
+import { CourseProgress } from "../models/CourseProgress.js"
 import User from "../models/User.js"
 import Course from "../models/Course.js"
 import { Purchase } from "../models/Purchase.js"
@@ -79,6 +79,8 @@ export const updateUserCourseProgress = async (req,res)=> {
         const {courseId, lectureId} = req.body
 
         const progressData = await CourseProgress.findOne({userId, courseId})
+        console.log('Progress Data:', progressData)
+        console.log('Lecture ID:', lectureId)
 
         if (progressData){
             if (progressData.lectureCompleted.includes(lectureId)){

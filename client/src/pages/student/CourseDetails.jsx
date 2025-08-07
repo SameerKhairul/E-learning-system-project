@@ -26,10 +26,14 @@ const CourseDetails = () => {
 
     const fetchCourseData = async() => {
       try {
-        const {data} = await axios.get(backendUrl + '/api/course/' + id)
+
+        const {data} = await axios.get(`${backendUrl}/api/course/${id}`)
+        console.log(data)
+        console.log(id)
 
         if (data.success) {
           setCourseData(data.courseData)
+          // console.log('Course Data:', courseData);
         } else {
           toast.error(data.message || 'Failed to fetch course data')
         }
@@ -107,7 +111,9 @@ const CourseDetails = () => {
       <div className='pt-8 text-gray-800'>
         <h2 className='text-xl font-semibold'>Course Structure</h2>
         <div className='pt-5'>
+          {/* {console.log(courseData)} */}
           {courseData.courseContent.map((chapter, index)=> (
+            
             <div key={index} className='border border-gray-300 bg-white mb-2 rounded'>
               <div className='flex items-center justify-between p-4 py-3 cursor-pointer select-none' onClick={()=> toggleSection(index)}>
                 <div className='flex items-center gap-2'>
