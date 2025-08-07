@@ -61,7 +61,7 @@ export const clerkWebhooks = async (req,res) => {
 
 const stripeInstance = new Stripe(process.env.STRIPE_SECRET_KEY)
 
-export const stripeWebhooks = async(request,respons) => {
+export const stripeWebhooks = async(request,response) => {
     const sig = request.headers['stripe-signature'];
 
     let event;
@@ -72,8 +72,11 @@ export const stripeWebhooks = async(request,respons) => {
     catch (err) {
         response.status(400).send(`Webhook Error: ${err.message}`);
     }
+//redo handle event
+
+
 //handle event
-      switch (event.type) {
+    switch (event.type) {
     case 'payment_intent.succeeded':{
       const paymentIntent = event.data.object;
       const paymentIntentId = paymentIntent.id;
@@ -85,7 +88,7 @@ export const stripeWebhooks = async(request,respons) => {
 
       const purchaseData = await Purchase.findById(purchaseId)
       const userData = await User.findById(purchaseData.userId)
-      const cpirseData = await Course.findById(purchaseData.courseId.toString())
+      const courseData = await Course.findById(purchaseData.courseId.toString())
 
       courseData.enrolledStudents.push(userData)
       await courseData.save()
@@ -96,9 +99,10 @@ export const stripeWebhooks = async(request,respons) => {
       await purchaseData.save()
 
       console.log('PaymentIntent was successful!');
-      break;}
-        case 'payment_intent.payment_failed':{
-        const paymentIntent = event.data.object;
+      break;
+    }
+    case 'payment_intent.payment_failed':{
+      const paymentIntent = event.data.object;
       const paymentIntentId = paymentIntent.id;
 
       const session = await stripeInstance.checkout.sessions.list({
@@ -110,7 +114,8 @@ export const stripeWebhooks = async(request,respons) => {
       purchaseData.status = 'failed'
       await purchaseData.save()
 
-      break;}
+      break;
+    }
     // ... handle other event types
     default:
       console.log(`Unhandled event type ${event.type}`);
