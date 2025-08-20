@@ -1,7 +1,7 @@
 import Course from "../models/Course.js";
-
-
-//Get All courses
+import User from '../models/User.js';
+import Exam from "../models/Exam.js"
+import CourseProgress from '../models/CourseProgress.js'
 
 export const  getAllCourses = async( req,res) => {
     try {
@@ -16,7 +16,7 @@ export const  getAllCourses = async( req,res) => {
     }
 }
 
-//Course by id
+
 
 export const getCourseId = async (req,res)=> {
 
@@ -24,9 +24,7 @@ export const getCourseId = async (req,res)=> {
 
 
     try {
-        // const courseData = await Course.findById(id).populate({path:'educator'})
-    
-        //remove lectureURL if isPreviewFree == Flase
+        
         const courseData = await Course.findById(id).populate({path:'educator'})
         
         courseData.courseContent.forEach(chapter => {
@@ -43,4 +41,165 @@ export const getCourseId = async (req,res)=> {
         
     }
 }
+
+
+export const getCertificate = async (req, res) => {
+  try {
+    const { id, userId } = req.params;
+
+   
+    const course = await Course.findById(id);
+    if (!course) {
+      return res.status(404).json({ message: 'Course not found' });
+    }
+
+   
+    const user = await User.findById(userId).select('name email image');
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    
+    const educator = await User.findOne({_id:course.educator}).select('name');
+    if (!educator) {
+      return res.status(404).json({ message: 'Educator not found' });
+    }
+
+    console.log("thisi ",educator)
+    res.json({
+      course,
+      user,
+      educator
+    });
+
+  } catch (error) {
+    console.error('Error fetching certificate data:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
+
+
+
+
+
+
+export const createExam = async (req, res) => {
+  try {
+    const {  questions } = req.body;
+    const {courseId} = req.params;
+
+    
+    if (!courseId) return res.status(400).json({ success: false, message: 'Course ID is required' });
+    if (!questions || !Array.isArray(questions) || questions.length === 0) {
+      return res.status(400).json({ success: false, message: 'At least one question is required' });
+    }
+
+   
+    const course = await Course.findById(courseId);
+    if (!course) return res.status(404).json({ success: false, message: 'Course not found' });
+
+   
+    const exam = new Exam({
+      course: courseId,
+      questions: questions.map(q => ({
+        questionText: q.questionText,
+        options: q.options,
+        correctOption: q.correctOption,
+      })),
+    });
+
+    await exam.save();
+
+    res.status(201).json({ success: true, message: 'Assignment created successfully', exam });
+  } catch (error) {
+    console.error('Error creating assignment:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+
+
+import Assignment from '../models/assignment.js'; 
+
+
+export const createAssignment = async (req, res) => {
+  try {
+    const { courseId, questions, deadline } = req.body;
+
+    if (!courseId || !questions || !deadline) {
+      return res.status(400).json({ success: false, message: 'All fields are required' });
+    }
+
+    const newAssignment = new Assignment({
+      courseId,
+      questions,
+      deadline: new Date(deadline), 
+    });
+
+    await newAssignment.save();
+
+    res.status(201).json({
+      success: true,
+      message: 'Assignment created successfully',
+      assignment: newAssignment,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: 'Server Error', error: error.message });
+  }
+};
+
+
+
+export const updateEnrollment = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { courseId } = req.body;
+
+    if (!userId || !courseId) {
+      return res.status(400).json({ success: false, message: "User ID and Course ID required" });
+    }
+
+ 
+    const updatedCourse = await Course.findByIdAndUpdate(
+      courseId,
+      { $pull: { enrolledStudents: userId } },
+      { new: true }
+    );
+
+    if (!updatedCourse) {
+      return res.status(404).json({ success: false, message: "Course not found" });
+    }
+
+    
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      { $pull: { enrolledCourses: courseId } },
+      { new: true }
+    );
+
+    if (!updatedUser) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    
+    await CourseProgress.deleteMany({ userId, courseId });
+
+    res.status(200).json({
+      success: true,
+      message: "User unenrolled successfully & course progress removed",
+      course: updatedCourse,
+      user: updatedUser
+    });
+
+  } catch (error) {
+    console.error("Error in updateEnrollment:", error);
+    res.status(500).json({ success: false, message: "Internal server error" });
+  }
+};
+
+
+
+
 

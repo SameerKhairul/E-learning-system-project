@@ -68,71 +68,165 @@ const stripeInstance = new Stripe(process.env.STRIPE_SECRET_KEY)
 
 export const stripeWebhooks = async(request,response) => {
     const sig = request.headers['stripe-signature'];
-
     let event;
-    console.log('Received request body:', event);
+
+    console.log('=== STRIPE WEBHOOK RECEIVED ===');
+    console.log('Timestamp:', new Date().toISOString());
+    console.log('Headers:', JSON.stringify(request.headers, null, 2));
+    console.log('Body length:', request.body?.length || 0);
 
     try {
-        console.log('Received body:', request.body);
-        console.log('Received signature:', event);
         event = Stripe.webhooks.constructEvent(request.body, sig, process.env.STRIPE_WEBHOOK_SECRET);
-        console.log(event);
+        console.log('✅ Webhook signature verified');
+        console.log('Event type:', event.type);
+        console.log('Event ID:', event.id);
+    } catch (err) {
+        console.error('❌ Webhook signature verification failed:', err.message);
+        console.error('STRIPE_WEBHOOK_SECRET exists:', !!process.env.STRIPE_WEBHOOK_SECRET);
+        return response.status(400).send(`Webhook Error: ${err.message}`);
     }
-    catch (err) {
-        response.status(400).send(`Webhook Error: ${err.message}`);
-    }
-    console.log('Received event:', event.type);
-//redo handle event
 
-
-//handle event
+    // Handle the event
     switch (event.type) {
-    case 'payment_intent.succeeded':{
-        console.log('PaymentIntent was successful!');
-      const paymentIntent = event.data.object;
-      const paymentIntentId = paymentIntent.id;
+        case 'checkout.session.completed': {
+            console.log('Processing checkout.session.completed event');
+            const session = event.data.object;
+            console.log('Session metadata:', session.metadata);
+            
+            try {
+                const purchaseId = session.metadata.purchaseId;
+                
+                if (!purchaseId) {
+                    console.error('No purchaseId found in session metadata');
+                    return response.json({received: true});
+                }
 
-      const session = await stripeInstance.checkout.sessions.list({
-        payment_intent: paymentIntentId
-      })
-      const { purchaseId } = session.data[0].metadata;
+                console.log('Looking for purchase with ID:', purchaseId);
 
-      const purchaseData = await Purchase.findById(purchaseId)
-      const userData = await User.findById(purchaseData.userId)
-      console.log(userData)
-      const courseData = await Course.findById(purchaseData.courseId.toString())
+                const purchaseData = await Purchase.findById(purchaseId);
+                if (!purchaseData) {
+                    console.error('Purchase not found:', purchaseId);
+                    return response.json({received: true});
+                }
 
-      courseData.enrolledStudents.push(userData)
-      await courseData.save()
-      userData.enrolledCourses.push(courseData._id)
-      await userData.save()
+                console.log('Found purchase:', purchaseData);
 
-      purchaseData.status = 'completed'
-      await purchaseData.save()
+                const userData = await User.findById(purchaseData.userId);
+                const courseData = await Course.findById(purchaseData.courseId);
 
-      console.log('PaymentIntent was successful!');
-      break;
+                if (!userData || !courseData) {
+                    console.error('User or Course not found. User:', !!userData, 'Course:', !!courseData);
+                    return response.json({received: true});
+                }
+
+                console.log('Found user and course. Enrolling...');
+
+                // Add user ID to course's enrolled students (not the whole user object)
+                if (!courseData.enrolledStudents.includes(userData._id)) {
+                    courseData.enrolledStudents.push(userData._id);
+                    await courseData.save();
+                }
+                
+                // Add course ID to user's enrolled courses
+                if (!userData.enrolledCourses.includes(courseData._id)) {
+                    userData.enrolledCourses.push(courseData._id);
+                    await userData.save();
+                }
+
+                purchaseData.status = 'completed';
+                await purchaseData.save();
+
+                console.log('Enrollment completed successfully!');
+
+            } catch (error) {
+                console.error('❌ Error processing checkout.session.completed:', error);
+                console.error('Error stack:', error.stack);
+                
+                try {
+                    const purchaseId = session.metadata?.purchaseId;
+                    if (purchaseId) {
+                        await Purchase.findByIdAndUpdate(purchaseId, { status: 'failed' });
+                        console.log('Updated purchase status to failed due to processing error');
+                    }
+                } catch (updateError) {
+                    console.error('Failed to update purchase status to failed:', updateError);
+                }
+            }
+            break;
+        }
+
+        case 'payment_intent.succeeded': {
+            console.log('PaymentIntent was successful!');
+            const paymentIntent = event.data.object;
+            const paymentIntentId = paymentIntent.id;
+
+            try {
+                const session = await stripeInstance.checkout.sessions.list({
+                    payment_intent: paymentIntentId
+                });
+                
+                if (!session.data.length) {
+                    console.error('No session found for payment intent:', paymentIntentId);
+                    return response.json({received: true});
+                }
+
+                const { purchaseId } = session.data[0].metadata;
+
+                const purchaseData = await Purchase.findById(purchaseId);
+                const userData = await User.findById(purchaseData.userId);
+                console.log('User data:', userData);
+                const courseData = await Course.findById(purchaseData.courseId.toString());
+
+                // Add user ID to course's enrolled students (not the whole user object)
+                if (!courseData.enrolledStudents.includes(userData._id)) {
+                    courseData.enrolledStudents.push(userData._id);
+                    await courseData.save();
+                }
+                
+                // Add course ID to user's enrolled courses
+                if (!userData.enrolledCourses.includes(courseData._id)) {
+                    userData.enrolledCourses.push(courseData._id);
+                    await userData.save();
+                }
+
+                purchaseData.status = 'completed';
+                await purchaseData.save();
+
+                console.log('PaymentIntent enrollment completed successfully!');
+
+            } catch (error) {
+                console.error('❌ Error processing payment_intent.succeeded:', error);
+            }
+            break;
+        }
+
+        case 'payment_intent.payment_failed': {
+            const paymentIntent = event.data.object;
+            const paymentIntentId = paymentIntent.id;
+
+            try {
+                const session = await stripeInstance.checkout.sessions.list({
+                    payment_intent: paymentIntentId
+                });
+                
+                if (session.data.length) {
+                    const { purchaseId } = session.data[0].metadata;
+                    const purchaseData = await Purchase.findById(purchaseId);
+                    purchaseData.status = 'failed';
+                    await purchaseData.save();
+                    console.log('Payment failed, updated purchase status');
+                }
+
+            } catch (error) {
+                console.error('❌ Error processing payment_intent.payment_failed:', error);
+            }
+            break;
+        }
+
+        default:
+            console.log(`Unhandled event type ${event.type}`);
     }
-    case 'payment_intent.payment_failed':{
-      const paymentIntent = event.data.object;
-      const paymentIntentId = paymentIntent.id;
 
-      const session = await stripeInstance.checkout.sessions.list({
-        payment_intent: paymentIntentId
-      })
-      const { purchaseId } = session.data[0].metadata;
-
-      const purchaseData = await Purchase.findById(purchaseId)
-      purchaseData.status = 'failed'
-      await purchaseData.save()
-
-      break;
-    }
-    // ... handle other event types
-    default:
-      console.log(`Unhandled event type ${event.type}`);
-  }
-
-  // Return a response to acknowledge receipt of the event
-  response.json({received: true});
+    // Return a response to acknowledge receipt of the event
+    response.json({received: true});
 }

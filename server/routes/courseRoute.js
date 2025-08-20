@@ -1,9 +1,14 @@
 import express from 'express'
-import { getAllCourses, getCourseId } from '../controllers/courseController.js'
+import {  createAssignment, createExam, getAllCourses, getCertificate, getCourseId, updateEnrollment } from '../controllers/courseController.js'
+
 
 const courseRouter = express.Router()
 
 courseRouter.get('/all',getAllCourses)
 courseRouter.get('/:id',getCourseId)
+courseRouter.get('/get-certificate/:id/:userId',getCertificate)
+courseRouter.post('/upload/:courseId',createExam)
+courseRouter.post('/upload-assignment',createAssignment)
+courseRouter.put('/update-enrollment/:userId',updateEnrollment)
 
 export default courseRouter;

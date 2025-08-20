@@ -3,6 +3,7 @@ import Course from '../models/Course.js'
 import {v2 as cloudinary} from 'cloudinary'
 import { Purchase } from '../models/Purchase.js'
 import User from '../models/User.js'
+import  Review from '../models/Review.js'
 
 //update role to educator
 
@@ -45,23 +46,29 @@ export const addCourse = async (req,res)=> {
     }
 }
 
-//Get educator courses
 
-export const getEducatorCourses = async (req,res) => {
-    
-    try {
-        const educator = req.auth.userId
+export const getEducatorCourses = async (req, res) => {
+  try {
+    const { userId } = req.params; 
 
-        const courses = await Course.find({educator})
-        res.json({ success: true, courses})
-
-    } catch (error) {
-        res.json( { success: false, message: error.message})
-        
+    if (!userId) {
+      return res.status(400).json({ success: false, message: "Invalid user ID" });
     }
-}
 
-//Get educator dashboard data = Make for admin (can be repurposed for marks)
+    const courses = await Course.find({ educator: userId }); 
+
+    res.status(200).json({ success: true, courses });
+  } catch (error) {
+    console.error("Error fetching educator courses:", error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+
+
+
+
+
 
 export const educatorDashboardData = async (req,res)=>{
     try {
@@ -128,5 +135,30 @@ export const getEnrolledStudentsData = async (req,res)=> {
     } catch (error) {
         res.json({success: false, message: error.message});
         
+    }
+}
+
+
+
+export const postReview = async(req,res)=>{
+    try{
+        const {newReview,educatorId,userName} = req.body;
+        await Review.create({educatorId,review:newReview,userName})
+
+        
+    }catch(error){
+        console.log(error)
+    }
+}
+
+
+export const getReview = async(req,res)=>{
+    try{
+        const {educatorId} = req.params;
+        const data = await Review.find({educatorId})
+        res.status(200).json(data)
+        
+    }catch(error){
+        res.status(500).json("Internal Server Error")
     }
 }

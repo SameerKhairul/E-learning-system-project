@@ -11,9 +11,16 @@ import AddCourse from './pages/educator/AddCourse'
 import Dashboard from './pages/educator/Dashboard'
 import MyCourses from './pages/educator/MyCourses'
 import StudentsEnrolled from './pages/educator/StudentsEnrolled'
-import Navbar from './components/student/navbar'
+import Navbar from './components/student/Navbar'
 import "quill/dist/quill.snow.css";
 import { ToastContainer} from 'react-toastify';
+import StudentDashboard from './pages/student/StudentDashboard'
+import CompletedCourses from './pages/student/CompletedCourses'
+import Footer from './components/student/Footer'
+import Certificate from './pages/student/Certificate'
+
+import UploadExam from './pages/educator/UploadExam'
+import UploadAssignment from './pages/educator/uploadAssignment'
 
 const App = () => {
 
@@ -31,6 +38,16 @@ const App = () => {
         <Route path='/my-enrollments' element={<MyEnrollments />}/>
         <Route path='/player/:courseId' element={<Player />}/>
         <Route path='/loading/:path' element={<Loading />}/>
+          <Route path="/student" element={<StudentDashboard />}>
+  {/* Default /student route */}
+  <Route index element={<MyEnrollments />} />
+
+  <Route path="completed-courses" element={<CompletedCourses />} />
+  <Route path="my-enrollments" element={<MyEnrollments />} />
+</Route>
+        <Route path='/certificate/:id' element={<Certificate/>}/>
+        <Route path='/upload-exam/:courseId' element={<UploadExam/>}/>
+        <Route path='/upload-assignment/:courseId' element={<UploadAssignment/>}/>
         <Route path='/educator' element={<Educator />}>
           <Route path='/educator' element={<Dashboard />} />
           <Route path='add-course' element={<AddCourse />} />
@@ -38,6 +55,7 @@ const App = () => {
           <Route path='student-enrolled' element={<StudentsEnrolled />} />
         </Route>
       </Routes>
+      <Footer/>
     </div>
   )
 }

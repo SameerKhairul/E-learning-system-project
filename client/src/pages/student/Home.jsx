@@ -15,7 +15,6 @@ const Home = () => {
         <CoursesSection />
         <TestimonialSection />
         <CallToAction />
-        <Footer />
       </div>
     </div>
   )
