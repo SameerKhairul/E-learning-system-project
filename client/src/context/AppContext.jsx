@@ -61,7 +61,7 @@ export const AppContextProvider = (props) => {
 
     //function to calc avg rating of courses
     const calculateRating = (course) => {
-        if(course.courseRatings.length == 0) {
+        if(!course || !course.courseRatings || course.courseRatings.length == 0) {
             return 0;
         }
         let totalRating = 0;
