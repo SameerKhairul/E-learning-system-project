@@ -90,7 +90,8 @@ const CourseDetails = () => {
 
   const fetchReviews = async () => {
     try {
-      const educatorId = courseData.educator._id
+      const educatorId = courseData.educator?._id
+      if (!educatorId) return
       const response  = await axios.get(`${backendUrl}/api/educator/get-review/${educatorId}`)
       setReviews(response.data)
       
@@ -104,7 +105,8 @@ const CourseDetails = () => {
     if (!newReview.trim()) return toast.error("Review cannot be empty")
     
     try {
-      const educatorId = courseData.educator._id
+      const educatorId = courseData.educator?._id
+      if (!educatorId) return toast.error("Educator information not available")
       const userName = userData.name
       const response = await axios.post(`${backendUrl}/api/educator/post-review`,{newReview,educatorId,userName})
       console.log(response)
@@ -155,7 +157,7 @@ const CourseDetails = () => {
             <p className='text-blue-500'>({courseData.courseRatings.length} {courseData.courseRatings.length > 1 ? 'ratings' : 'rating'})</p>
             <p>{courseData.enrolledStudents.length} {courseData.enrolledStudents.length > 1 ? 'students' : 'student'}</p>
           </div>
-          <p className='text-sm'>Course by <span className='text-blue-600 underline'>{courseData.educator.name}</span></p>
+          <p className='text-sm'>Course by <span className='text-blue-600 underline'>{courseData.educator?.name || 'Unknown Educator'}</span></p>
           <div className='pt-8 text-gray-800'>
             <h2 className='text-xl font-semibold'>Course Structure</h2>
             <div className='pt-5'>
