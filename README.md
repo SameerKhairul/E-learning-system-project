@@ -39,12 +39,7 @@ A full-stack e-learning platform built with React, Node.js, and MongoDB. Feature
 
 ## ⚡ Quick Start
 
-### For Windows Users:
-1. **Easy Setup**: Run `setup-windows.bat`
-2. **Easy Start**: Run `start-windows.bat`
-3. **Manual Setup**: Follow the [Windows Setup Guide](README-WINDOWS.md)
-
-### For Linux/macOS Users:
+**Works on Windows, macOS, and Linux:**
 
 1. **Clone the repository**
    ```bash
@@ -91,23 +86,24 @@ A full-stack e-learning platform built with React, Node.js, and MongoDB. Feature
    ```bash
    # Terminal 1 - Server
    cd server
-   npm start
+   npm run server
    
    # Terminal 2 - Client
    cd client
    npm run dev
    ```
 
-## 🖥️ Platform-Specific Scripts
+## 🖥️ Available Scripts
 
-### Windows:
-- `npm run start:windows` - Start with Windows optimizations
-- `npm run dev:windows` - Development mode for Windows
-
-### Cross-Platform:
+**Server Scripts:**
+- `npm run server` - Development with auto-reload
 - `npm start` - Production start
 - `npm run dev` - Development mode
+
+**Client Scripts:**
+- `npm run dev` - Development server
 - `npm run build` - Build for production
+- `npm run preview` - Preview production build
 
 ## 🌐 Access the Application
 
@@ -132,9 +128,7 @@ E-learning-system-project/
 │   ├── routes/            # API routes
 │   ├── middlewares/       # Custom middleware
 │   └── configs/           # Configuration files
-├── README-WINDOWS.md      # Windows setup guide
-├── setup-windows.bat      # Windows setup script
-└── start-windows.bat      # Windows start script
+└── README-WINDOWS.md      # Detailed Windows guide (optional)
 ```
 
 ## 🔧 API Endpoints
@@ -168,12 +162,7 @@ docker-compose up --build
 
 ## 🐛 Troubleshooting
 
-### Windows Issues:
-- See [Windows Setup Guide](README-WINDOWS.md)
-- Run Command Prompt as Administrator
-- Check Windows Firewall settings
-
-### General Issues:
+### Common Issues:
 - Ensure all environment variables are set
 - Check Node.js version compatibility
 - Verify MongoDB connection
@@ -194,10 +183,24 @@ This project is licensed under the MIT License.
 ## 📞 Support
 
 For issues and questions:
-- Check the [Windows Setup Guide](README-WINDOWS.md) for Windows-specific help
 - Create an issue on GitHub
 - Check existing issues for solutions
+- See [Windows Setup Guide](README-WINDOWS.md) for detailed Windows help (if needed)
 
 ---
 
 **Built with ❤️ for cross-platform compatibility**
+
+## 🚀 Simple Usage
+
+Just use these standard commands on **any platform**:
+
+```bash
+# Backend
+cd server && npm run server
+
+# Frontend  
+cd client && npm run dev
+```
+
+That's it! Works on Windows, macOS, and Linux. 🎉

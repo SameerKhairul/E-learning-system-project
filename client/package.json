@@ -8,10 +8,7 @@
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "start": "vite",
-    "dev:windows": "vite",
-    "build:windows": "vite build",
-    "start:windows": "vite"
+    "start": "vite"
   },
   "dependencies": {
     "@clerk/clerk-react": "^5.38.1",
