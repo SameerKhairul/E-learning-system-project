@@ -7,7 +7,11 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "start": "vite",
+    "dev:windows": "vite",
+    "build:windows": "vite build",
+    "start:windows": "vite"
   },
   "dependencies": {
     "@clerk/clerk-react": "^5.38.1",
@@ -41,6 +45,9 @@
     "vite": "^7.0.4"
   },
   "optionalDependencies": {
-    "@esbuild/linux-x64": "0.25.9"
+    "@esbuild/linux-x64": "0.25.9",
+    "@esbuild/win32-x64": "0.25.9",
+    "@esbuild/darwin-x64": "0.25.9",
+    "@esbuild/darwin-arm64": "0.25.9"
   }
 }
