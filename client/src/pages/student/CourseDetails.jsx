@@ -4,7 +4,6 @@ import { useParams, useNavigate } from 'react-router-dom'
 import Loading from '../../components/student/Loading'
 import { assets } from '../../assets/assets'
 import humanizeDuration from 'humanize-duration'
-import Footer from '../../components/student/Footer'
 import YouTube from 'react-youtube'
 import { toast } from 'react-toastify'
 import axios from 'axios'
@@ -90,13 +89,18 @@ const CourseDetails = () => {
 
   const fetchReviews = async () => {
     try {
-      const educatorId = courseData.educator?._id
-      if (!educatorId) return
-      const response  = await axios.get(`${backendUrl}/api/educator/get-review/${educatorId}`)
-      setReviews(response.data)
+      const courseId = courseData._id
+      if (!courseId) return
+      const response = await axios.get(`${backendUrl}/api/educator/get-review/${courseId}`)
+      if (response.data.success) {
+        setReviews(response.data.reviews)
+      } else {
+        setReviews([])
+      }
       
     } catch (err) {
       toast.error(err.message || 'Failed to load reviews')
+      setReviews([])
     }
   }
 
@@ -106,14 +110,29 @@ const CourseDetails = () => {
     
     try {
       const educatorId = courseData.educator?._id
-      if (!educatorId) return toast.error("Educator information not available")
+      const courseId = courseData._id
+      if (!educatorId || !courseId) return toast.error("Course information not available")
+      
       const userName = userData.name
-      const response = await axios.post(`${backendUrl}/api/educator/post-review`,{newReview,educatorId,userName})
-      console.log(response)
-  }catch(error){
-    console.log(error)
+      const response = await axios.post(`${backendUrl}/api/educator/post-review`, {
+        newReview,
+        educatorId,
+        courseId,
+        userName
+      })
+      
+      if (response.data.success) {
+        toast.success("Review posted successfully!")
+        setNewReview("")
+        fetchReviews() // Refresh reviews after posting
+      } else {
+        toast.error(response.data.message || "Failed to post review")
+      }
+    } catch(error) {
+      toast.error(error.response?.data?.message || "Failed to post review")
+      console.log(error)
+    }
   }
-}
 
   useEffect(() => {
     fetchCourseData()
@@ -329,8 +348,6 @@ const CourseDetails = () => {
 
 
       </div>
-
-      <Footer />
     </>
   ) : <Loading />
 }

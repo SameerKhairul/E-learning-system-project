@@ -142,23 +142,40 @@ export const getEnrolledStudentsData = async (req,res)=> {
 
 export const postReview = async(req,res)=>{
     try{
-        const {newReview,educatorId,userName} = req.body;
-        await Review.create({educatorId,review:newReview,userName})
+        const {newReview, educatorId, userName, courseId} = req.body;
+        
+        if (!courseId) {
+            return res.status(400).json({success: false, message: "Course ID is required"});
+        }
+        
+        await Review.create({
+            educatorId,
+            courseId,
+            review: newReview,
+            userName
+        });
 
+        res.status(201).json({success: true, message: "Review posted successfully"});
         
     }catch(error){
-        console.log(error)
+        console.log(error);
+        res.status(500).json({success: false, message: "Internal Server Error"});
     }
 }
 
-
 export const getReview = async(req,res)=>{
     try{
-        const {educatorId} = req.params;
-        const data = await Review.find({educatorId})
-        res.status(200).json(data)
+        const {courseId} = req.params;
+        
+        if (!courseId) {
+            return res.status(400).json({success: false, message: "Course ID is required"});
+        }
+        
+        const data = await Review.find({courseId}).sort({createdAt: -1});
+        res.status(200).json({success: true, reviews: data});
         
     }catch(error){
-        res.status(500).json("Internal Server Error")
+        console.log(error);
+        res.status(500).json({success: false, message: "Internal Server Error"});
     }
 }

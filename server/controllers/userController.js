@@ -248,6 +248,13 @@ export const purchaseCourse = async (req, res) => {
             amount: newPurchase.amount,
             status: newPurchase.status
         });
+        
+        const markData = {
+            courseId: courseData._id,
+            userId,
+            marks: [],
+        }
+        const newMarks = await Marks.create(markData);
 
         //Stripe gateway initialize
         const stripeInstance = new Stripe(process.env.STRIPE_SECRET_KEY)

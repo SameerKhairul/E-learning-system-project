@@ -13,6 +13,6 @@ educatorRouter.get('/get-educator-course/:userId',getEducatorCourses)
 educatorRouter.get('/dashboard', protectEducator,educatorDashboardData)
 educatorRouter.get('/enrolled-students', protectEducator,getEnrolledStudentsData)
 educatorRouter.post('/post-review',postReview)
-educatorRouter.get('/get-review/:educatorId',getReview)
+educatorRouter.get('/get-review/:courseId',getReview)
 
 export default educatorRouter;

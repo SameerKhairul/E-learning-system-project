@@ -21,6 +21,7 @@ import Certificate from './pages/student/Certificate'
 
 import UploadExam from './pages/educator/UploadExam'
 import UploadAssignment from './pages/educator/uploadAssignment'
+import Leaderboard from './pages/student/Leaderboard'
 
 const App = () => {
 
@@ -37,6 +38,7 @@ const App = () => {
         <Route path='/course/:id' element={<CourseDetails />}/>
         <Route path='/my-enrollments' element={<MyEnrollments />}/>
         <Route path='/player/:courseId' element={<Player />}/>
+        <Route path='/leaderboard/:courseId' element={<Leaderboard />}/>
         <Route path='/loading/:path' element={<Loading />}/>
           <Route path="/student" element={<StudentDashboard />}>
   {/* Default /student route */}
@@ -55,7 +57,7 @@ const App = () => {
           <Route path='student-enrolled' element={<StudentsEnrolled />} />
         </Route>
       </Routes>
-      <Footer/>
+      {!isEducatorRoute && <Footer/>}
     </div>
   )
 }

@@ -2,6 +2,7 @@ import Course from "../models/Course.js";
 import User from '../models/User.js';
 import Exam from "../models/Exam.js"
 import CourseProgress from '../models/CourseProgress.js'
+import Assignment from '../models/assignment.js'
 
 export const  getAllCourses = async( req,res) => {
     try {
@@ -120,9 +121,6 @@ export const createExam = async (req, res) => {
 
 
 
-import Assignment from '../models/assignment.js'; 
-
-
 export const createAssignment = async (req, res) => {
   try {
     const { courseId, questions, deadline } = req.body;
@@ -195,6 +193,49 @@ export const updateEnrollment = async (req, res) => {
 
   } catch (error) {
     console.error("Error in updateEnrollment:", error);
+    res.status(500).json({ success: false, message: "Internal server error" });
+  }
+};
+
+export const getUpcomingDeadlines = async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    if (!userId) {
+      return res.status(400).json({ success: false, message: "User ID is required" });
+    }
+
+    const user = await User.findById(userId).populate('enrolledCourses');
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    const enrolledCourseIds = user.enrolledCourses.map(course => course._id);
+
+    const now = new Date();
+    const twentyFourHoursFromNow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+
+    const upcomingAssignments = await Assignment.find({
+      courseId: { $in: enrolledCourseIds },
+      deadline: {
+        $gte: now,
+        $lte: twentyFourHoursFromNow
+      }
+    }).populate('courseId', 'courseTitle');
+
+    const deadlineNotifications = upcomingAssignments.map(assignment => ({
+      courseName: assignment.courseId.courseTitle,
+      deadline: assignment.deadline,
+      assignmentId: assignment._id
+    }));
+
+    res.status(200).json({
+      success: true,
+      notifications: deadlineNotifications
+    });
+
+  } catch (error) {
+    console.error("Error fetching upcoming deadlines:", error);
     res.status(500).json({ success: false, message: "Internal server error" });
   }
 };

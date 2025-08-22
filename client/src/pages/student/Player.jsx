@@ -4,11 +4,11 @@ import { useParams } from 'react-router-dom'
 import { assets } from '../../assets/assets'
 import humanizeDuration from 'humanize-duration'
 import YouTube from 'react-youtube'
-import Footer from '../../components/student/Footer'
 import Rating from '../../components/student/Rating'
 import { toast } from 'react-toastify'
 import Loading from '../../components/student/Loading'
 import axios from 'axios'
+import { Link } from 'react-router-dom'
 
 const Player = () => {
 
@@ -170,7 +170,15 @@ const getCourseProgress = async () => {
                 <h1 className='text-xl font-bold'>Rate this Course:</h1>
                 <Rating initialRating={initialRating} onRate={handleRate}/>
               </div>
+            <div className='mt-4'>
+              <Link to={`/leaderboard/${courseId}`}>
+                <button className='bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition'>
+                View Leaderboard
+                </button>
+              </Link>
+            </div>      
       </div>
+      
       {/*right*/}
       <div className='md:mt-10'>
         {playerData ? (
@@ -189,7 +197,6 @@ const getCourseProgress = async () => {
           }
       </div>
     </div>
-    <Footer />
     </>
   ) : <Loading />
 }
