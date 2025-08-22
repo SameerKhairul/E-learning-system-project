@@ -1,7 +1,7 @@
 import { CourseProgress } from "../models/CourseProgress.js"
 import Course from "../models/Course.js"
 import User from "../models/User.js"
-
+import { Marks } from "../models/Mark.js"
 import { Purchase } from "../models/Purchase.js"
 import Stripe from "stripe"
 import { clerkClient } from '@clerk/express'

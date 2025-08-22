@@ -3,6 +3,8 @@ import User from '../models/User.js';
 import Exam from "../models/Exam.js"
 import CourseProgress from '../models/CourseProgress.js'
 import Assignment from '../models/assignment.js'
+import { Purchase } from '../models/Purchase.js'
+import { Marks } from '../models/Mark.js'
 
 export const  getAllCourses = async( req,res) => {
     try {
@@ -159,18 +161,24 @@ export const updateEnrollment = async (req, res) => {
       return res.status(400).json({ success: false, message: "User ID and Course ID required" });
     }
 
- 
+    // Check if user is actually enrolled in this course
+    const course = await Course.findById(courseId);
+    if (!course) {
+      return res.status(404).json({ success: false, message: "Course not found" });
+    }
+
+    if (!course.enrolledStudents.includes(userId)) {
+      return res.status(400).json({ success: false, message: "User is not enrolled in this course" });
+    }
+
+    // Update course to remove student
     const updatedCourse = await Course.findByIdAndUpdate(
       courseId,
       { $pull: { enrolledStudents: userId } },
       { new: true }
     );
 
-    if (!updatedCourse) {
-      return res.status(404).json({ success: false, message: "Course not found" });
-    }
-
-    
+    // Update user to remove course
     const updatedUser = await User.findByIdAndUpdate(
       userId,
       { $pull: { enrolledCourses: courseId } },
@@ -181,12 +189,19 @@ export const updateEnrollment = async (req, res) => {
       return res.status(404).json({ success: false, message: "User not found" });
     }
 
-    
-    await CourseProgress.deleteMany({ userId, courseId });
+    // Clean up all related data
+    await Promise.all([
+      CourseProgress.deleteMany({ userId, courseId }),
+      Purchase.updateMany(
+        { userId, courseId, status: 'completed' },
+        { status: 'unenrolled' }
+      ),
+      Marks.deleteMany({ userId, courseId })
+    ]);
 
     res.status(200).json({
       success: true,
-      message: "User unenrolled successfully & course progress removed",
+      message: "User unenrolled successfully - course progress, marks, and enrollment records updated",
       course: updatedCourse,
       user: updatedUser
     });
