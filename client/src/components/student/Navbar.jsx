@@ -5,6 +5,7 @@ import { useClerk, UserButton, useUser } from '@clerk/clerk-react'
 import { AppContext } from '../../context/AppContext'
 import axios from 'axios'
 import { toast } from 'react-toastify'
+import DeadlineNotifications from './DeadlineNotifications'
 
 const Navbar = () => {
 
@@ -40,12 +41,16 @@ const Navbar = () => {
           { user && <>
 
             <button onClick={becomeEducator}>{isEducator ? 'Educator Dashboard' : 'Become Educator'}</button>
-          |  <Link to='/my-enrollments'>My Enrollments</Link>
+          |  <Link to='/my-enrollments'>My Enrollments</Link> |
+             <Link to='/student'>Dashboard</Link>
           </>}
         </div>
-        { user ? <UserButton/> :
+        <div className='flex items-center gap-3'>
+          { user && <DeadlineNotifications /> }
+          { user ? <UserButton/> :
           
-          <button onClick={()=> openSignIn()}className='bg-blue-600 text-white px-5 py-2 rounded-full'>Create Account</button>}
+          <button onClick={()=> openSignIn()}className='bg-blue-600 text-white px-5 py-2 rounded-full'>Log-In/Sign-Up</button>}
+        </div>
       </div>
       {/* Mobile view */}
       <div className='md:hidden flex items-center gap-2 sm:gap-5 text-gray-500'>
@@ -54,15 +59,19 @@ const Navbar = () => {
 
             
             <button onClick={becomeEducator}>{isEducator ? 'Educator Dashboard' : 'Become Educator'}</button>
-          |  <Link to='/my-enrollments'>My Enrollments</Link>
+          |  <Link to='/my-enrollments'>My Enrollments</Link> |
+             <Link to='/student'>Dashboard</Link>
           </>}
         </div>
         
-        {
-          user ? 
-            <UserButton /> :
-          <button onClick={()=> openSignIn()}><img src={assets.user_icon} alt="" /></button>
-          }
+        <div className='flex items-center gap-2'>
+          { user && <DeadlineNotifications /> }
+          {
+            user ? 
+              <UserButton /> :
+            <button onClick={()=> openSignIn()}><img src={assets.user_icon} alt="" /></button>
+            }
+        </div>
       </div>
     </div>
   )

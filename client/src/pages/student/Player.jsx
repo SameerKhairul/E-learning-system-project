@@ -9,13 +9,14 @@ import Rating from '../../components/student/Rating'
 import { toast } from 'react-toastify'
 import Loading from '../../components/student/Loading'
 import axios from 'axios'
+import { Link } from 'react-router-dom'
 
 const Player = () => {
 
 const {enrolledCourses, calculateChapterTime, backendUrl, getToken, userData, fetchUserEnrolledCourses} = useContext(AppContext)
 const {courseId} = useParams()
 
-
+const [materials, setMaterials] = useState(null)
 const [courseData, setCourseData] = useState(null)
 const [openSections, setOpenSections] = useState({})
 const [playerData, setPlayerData] = useState(null)
@@ -36,12 +37,33 @@ const getCourseData = ()=> {
     }
   })
 }
+const getMaterials = async () => {
+  try {
+    const token = await getToken();
+    const { data } = await axios.get(`${backendUrl}/api/course/materials/${courseId}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    console.log("materials", data);
+    if (data.success) {
+      setMaterials(data.materials[0].fileUrl);
+      console.log("materials data file", data.materials[0].fileUrl);
+    } else {
+      toast.error(data.message || 'no materials to fetch');
+    }
+  } catch (error) {
+    toast.error(error.message || 'Failed to fetch materials');
+  }
+};
 const toggleSection = (index) => {
     setOpenSections((prev) => (
       {...prev,[index]: !prev[index]}
     ));
 }
 
+useEffect(() => {
+  getMaterials();
+  console.log("materials", materials);
+}, [courseId]);
 
 useEffect(()=>{
   if(enrolledCourses.length > 0){
@@ -55,13 +77,28 @@ const markLectureAsCompleted = async (lectureId) => {
     const {data} = await axios.post(`${backendUrl}/api/user/update-course-progress`, {courseId, lectureId},{headers: {Authorization: `Bearer ${token}`}})
     if (data.success) {
       toast.success(data.message)
+      // Update progress data immediately to prevent crash
+      setProgressData(prevData => {
+        if (!prevData) {
+          return { lectureCompleted: [lectureId] }
+        }
+        if (!prevData.lectureCompleted) {
+          return { ...prevData, lectureCompleted: [lectureId] }
+        }
+        if (!prevData.lectureCompleted.includes(lectureId)) {
+          return { ...prevData, lectureCompleted: [...prevData.lectureCompleted, lectureId] }
+        }
+        return prevData
+      })
+      // Also refresh from server
       getCourseProgress()
     } else {
-      toast.error(data.message)
+      toast.error(data.message || 'Failed to mark lecture as completed')
     }
   
   } catch (error) {
-    toast.error(error.message)
+    console.error('Error marking lecture as completed:', error)
+    toast.error(error.response?.data?.message || error.message || 'Failed to mark lecture as completed')
   }
 }
 
@@ -70,14 +107,23 @@ const getCourseProgress = async () => {
     const token = await getToken();
     const {data} = await axios.post(`${backendUrl}/api/user/get-course-progress`, {courseId}, {headers: {Authorization: `Bearer ${token}`}})
     if (data.success) {
-      console.log(data.progressData)
-      setProgressData(data.progressData);
-
+      console.log('Progress data:', data.progressData)
+      // Ensure progressData has the correct structure
+      const progressData = data.progressData || { lectureCompleted: [] }
+      if (!progressData.lectureCompleted) {
+        progressData.lectureCompleted = []
+      }
+      setProgressData(progressData);
     } else {
-      toast.error(data.message || 'Failed to fetch course progress')
+      console.warn('Failed to fetch progress:', data.message)
+      // Set empty progress data instead of null to prevent crashes
+      setProgressData({ lectureCompleted: [] })
     }
   } catch (error) {
-    toast.error(error.message || 'Failed to fetch course progress')
+    console.error('Error fetching course progress:', error)
+    // Set empty progress data instead of null to prevent crashes
+    setProgressData({ lectureCompleted: [] })
+    toast.error(error.response?.data?.message || error.message || 'Failed to fetch course progress')
   }
 }
 
@@ -123,7 +169,7 @@ const getCourseProgress = async () => {
                         {chapter.chapterContent.map((lecture,i)=> (
                           <li key={i} className='flex items-start gap-2 py-1'>
 
-                            <img src={progressData && progressData.markLectureAsCompleted.includes(lecture.lectureId) ? assets.blue_tick_icon : assets.play_icon} 
+                            <img src={progressData && progressData.lectureCompleted && progressData.lectureCompleted.includes(lecture.lectureId) ? assets.blue_tick_icon : assets.play_icon} 
                           alt="play_icon" className='w-4 h-4 mt-1' />
                           <div className='flex items-center justify-between w-full text-gray-800 text-xs md:text-default'>
                             <p>{lecture.lectureTitle}</p>
@@ -142,20 +188,37 @@ const getCourseProgress = async () => {
                   </div>
                 ))}
               </div>
+              {materials && (
+              <div className="mt-6">
+              <h2 className="text-lg font-semibold">Course Materials</h2>
+              <a href={materials} target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">
+                Download PDF
+              </a>
+              </div>
+              )}
               <div className='flex items-center gap-2 py-3 mt-10'>
                 <h1 className='text-xl font-bold'>Rate this Course:</h1>
                 <Rating initialRating={initialRating} onRate={handleRate}/>
               </div>
-      </div>
+            <div className='mt-4'>
+              <Link to={`/leaderboard/${courseId}`}>
+                <button className='bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition'>
+                View Leaderboard
+                </button>
+              </Link>
+            </div>
+
+        </div>
+      
       {/*right*/}
       <div className='md:mt-10'>
         {playerData ? (
           <div>
-            <YouTube videoId={playerData.lectureUrl.split('/').pop()} iframClassName='w-full aspect-video'/>
+            <YouTube videoId={playerData.lectureUrl.split('/').pop()} iframeClassName='w-full aspect-video'/>
           <div className='flex justify-between items-center mt-1'>
             <p>{playerData.chapter}.{playerData.lecture} {playerData.lectureTitle}</p>
             <button onClick={()=> markLectureAsCompleted(playerData.lectureId)} className='text-blue-600'>
-              {progressData && progressData.markLectureAsCompleted.includes(playerData.lectureId) ? 'Completed' : 'Mark Complete'}
+              {progressData && progressData.lectureCompleted && progressData.lectureCompleted.includes(playerData.lectureId) ? 'Completed' : 'Mark Complete'}
               </button>
           </div>
           </div>
@@ -165,7 +228,6 @@ const getCourseProgress = async () => {
           }
       </div>
     </div>
-    <Footer />
     </>
   ) : <Loading />
 }

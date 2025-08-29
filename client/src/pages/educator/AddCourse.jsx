@@ -28,7 +28,7 @@ const AddCourse = () => {
       isPreviewFree: false,
     }
   )
-
+  const [studyMaterial, setStudyMaterials] = useState(null)
   const handleChapter = (action,chapterId) => {
     if (action === 'add') {
       const title = prompt('Enter Chapter Name:');
@@ -97,7 +97,9 @@ const AddCourse = () => {
       if(!image){
         toast.error('Please upload a course thumbnail image')
       }
-
+      if(!studyMaterial){
+        toast.error('Please upload study materials')
+      }
       const courseData = {
         courseTitle,
         courseDescription: quillRef.current.root.innerHTML,
@@ -109,6 +111,7 @@ const AddCourse = () => {
       const formData = new FormData()
       formData.append('image', image)
       formData.append('courseData', JSON.stringify(courseData))
+      formData.append('pdf', studyMaterial)
 
       const token = await getToken()
       const {data} = await axios.post(`${backendUrl}/api/educator/add-course`, formData, {headers: {Authorization: `Bearer ${token}`}})
@@ -150,24 +153,52 @@ const AddCourse = () => {
           <p>Course Description</p>
           <div ref={editorRef}></div>
         </div>
-        <div className='flex items-center justify-between flex-wrap py-20'>
-          <div className='flex flex-col gap-1'>
-            <p>Course Price</p>
-            <input onChange={e => setCoursePrice(e.target.value)} value={coursePrice} type='number' placeholder='0'
-            className='outline-none md:py-2.5 py-2 w-28 px-3 rounded border border-gray-500' required />
-          </div>
+<div className='flex items-center justify-between flex-wrap py-10'>
 
-          <div className='flex md:flex-row flex-col items-center gap-3'>
-            <p>Course Thumbnail</p>
-            <label htmlFor="thumbnailImage" className='flex items-center gap-3'>
-              <img src={assets.file_upload_icon} alt="upload_icon" className='p-3 bg-blue-500 rounded' />
-              <input type="file" id='thumbnailImage' onChange={e => setImage(e.target.files[0])} accept='image/*' hidden />
-              <img src={image ? URL.createObjectURL(image) : ''} className='max-h-10' alt="" />
-            </label>
+ 
+  <div className='flex flex-col gap-1'>
+    <p>Course Price</p>
+    <input 
+      onChange={e => setCoursePrice(e.target.value)} 
+      value={coursePrice} 
+      type='number' 
+      placeholder='0'
+      className='outline-none md:py-2.5 py-2 w-28 px-3 rounded border border-gray-500' 
+      required 
+    />
+  </div>
 
-          </div>
+ 
+  <div className='flex md:flex-row flex-col items-center gap-3'>
+    <p>Course Thumbnail</p>
+    <label htmlFor="thumbnailImage" className='flex items-center gap-3'>
+      <img src={assets.file_upload_icon} alt="upload_icon" className='p-3 bg-blue-500 rounded' />
+      <input 
+        type="file" 
+        id='thumbnailImage' 
+        onChange={e => setImage(e.target.files[0])} 
+        accept='image/*' 
+        hidden 
+      />
+      <img src={image ? URL.createObjectURL(image) : ''} className='max-h-10' alt="" />
+    </label>
+  </div>
+</div>
 
-        </div>
+<div className='flex md:flex-row flex-col items-center gap-3 mt-1'>
+  <p>Study Material (PDF)</p>
+  <label htmlFor="studyMaterialPdf" className='flex items-center gap-3'>
+    <img src={assets.file_upload_icon} alt="upload_icon" className='p-3 bg-green-500 rounded' />
+    <input 
+      type="file" 
+      id='studyMaterialPdf' 
+      onChange={e => setStudyMaterials(e.target.files[0])} 
+      accept='application/pdf' 
+      hidden 
+    />
+    <span className='text-sm'>{studyMaterial?.name || 'No file selected'}</span>
+  </label>
+</div>
         <div className='flex flex-col gap-1'>
           <p>Discount %</p>
           <input type="number" onChange={e => setDiscount(e.target.value)} value={discount} placeholder='0' min={0} max={100}

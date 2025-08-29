@@ -1,16 +1,30 @@
 import { CourseProgress } from "../models/CourseProgress.js"
-import User from "../models/User.js"
 import Course from "../models/Course.js"
+import User from "../models/User.js"
+import { Marks } from "../models/Mark.js"
 import { Purchase } from "../models/Purchase.js"
 import Stripe from "stripe"
+import { clerkClient } from '@clerk/express'
 
 export const getUserData = async( req,res) => {
     try {
         const userId = req.auth.userId
-        const user = await User.findById(userId)
+        let user = await User.findById(userId)
 
         if(!user){
-            return res.json({success: false, message: 'User Not Found'})
+            // If user doesn't exist, create one from Clerk data
+            try {
+                const clerkUser = await clerkClient.users.getUser(userId)
+                const userData = {
+                    _id: clerkUser.id,
+                    email: clerkUser.emailAddresses[0].emailAddress,
+                    name: clerkUser.firstName + " " + clerkUser.lastName,
+                    imageUrl: clerkUser.imageUrl,
+                }
+                user = await User.create(userData)
+            } catch (clerkError) {
+                return res.json({success: false, message: 'User Not Found'})
+            }
         }
 
         res.json({success: true, user})
@@ -19,12 +33,28 @@ export const getUserData = async( req,res) => {
     }
 }
 
-// user enrolled courses with lec link
+
 
 export const userEnrolledCourses = async (req,res)=> {
     try {
         const userId = req.auth.userId
-        const userData = await User.findById(userId).populate('enrolledCourses')
+        let userData = await User.findById(userId).populate('enrolledCourses')
+        
+        if(!userData){
+            // If user doesn't exist, create one from Clerk data
+            try {
+                const clerkUser = await clerkClient.users.getUser(userId)
+                const newUserData = {
+                    _id: clerkUser.id,
+                    email: clerkUser.emailAddresses[0].emailAddress,
+                    name: clerkUser.firstName + " " + clerkUser.lastName,
+                    imageUrl: clerkUser.imageUrl,
+                }
+                userData = await User.create(newUserData)
+            } catch (clerkError) {
+                return res.json({success: false, message: 'User Not Found'})
+            }
+        }
         
         res.json({success: true, enrolledCourses: userData.enrolledCourses})
     } catch (error) {
@@ -79,8 +109,7 @@ export const updateUserCourseProgress = async (req,res)=> {
         const {courseId, lectureId} = req.body
 
         const progressData = await CourseProgress.findOne({userId, courseId})
-        console.log('Progress Data:', progressData)
-        console.log('Lecture ID:', lectureId)
+       
 
         if (progressData){
             if (progressData.lectureCompleted.includes(lectureId)){
@@ -136,9 +165,25 @@ export const addUserRating = async (req, res)=> {
             return res.json({success: false, message: "Course not found"});
 
         }
-        const user = await User.findById(userId);
+        let user = await User.findById(userId);
 
-        if (!user || !user.enrolledCourses.includes(courseId)){
+        if (!user) {
+            // If user doesn't exist, create one from Clerk data
+            try {
+                const clerkUser = await clerkClient.users.getUser(userId)
+                const newUserData = {
+                    _id: clerkUser.id,
+                    email: clerkUser.emailAddresses[0].emailAddress,
+                    name: clerkUser.firstName + " " + clerkUser.lastName,
+                    imageUrl: clerkUser.imageUrl,
+                }
+                user = await User.create(newUserData)
+            } catch (clerkError) {
+                return res.json({success: false, message: 'User Not Found'})
+            }
+        }
+
+        if (!user.enrolledCourses.includes(courseId)){
         return res.json({success: false, message: "User Has not purchased this course."});
         }
 
@@ -166,11 +211,27 @@ export const purchaseCourse = async (req, res) => {
         const { courseId } = req.body
         const {  origin } = req.headers
         const userId = req.auth.userId
-        const userData = await User.findById(userId)
+        let userData = await User.findById(userId)
         const courseData = await Course.findById(courseId)
 
-        if(!userData || !courseData) {
-            return res.json({success: false, message: 'Data not found'})
+        if(!userData) {
+            // If user doesn't exist, create one from Clerk data
+            try {
+                const clerkUser = await clerkClient.users.getUser(userId)
+                const newUserData = {
+                    _id: clerkUser.id,
+                    email: clerkUser.emailAddresses[0].emailAddress,
+                    name: clerkUser.firstName + " " + clerkUser.lastName,
+                    imageUrl: clerkUser.imageUrl,
+                }
+                userData = await User.create(newUserData)
+            } catch (clerkError) {
+                return res.json({success: false, message: 'User Not Found'})
+            }
+        }
+
+        if(!courseData) {
+            return res.json({success: false, message: 'Course not found'})
         }
 
         const purchaseData = {
@@ -180,6 +241,20 @@ export const purchaseCourse = async (req, res) => {
         }
 
         const newPurchase = await Purchase.create(purchaseData)
+        console.log('Created new purchase:', {
+            id: newPurchase._id,
+            userId: newPurchase.userId,
+            courseId: newPurchase.courseId,
+            amount: newPurchase.amount,
+            status: newPurchase.status
+        });
+        
+        const markData = {
+            courseId: courseData._id,
+            userId,
+            marks: [],
+        }
+        const newMarks = await Marks.create(markData);
 
         //Stripe gateway initialize
         const stripeInstance = new Stripe(process.env.STRIPE_SECRET_KEY)
@@ -207,9 +282,53 @@ export const purchaseCourse = async (req, res) => {
             }
         })
 
+        console.log('Created Stripe session:', {
+            sessionId: session.id,
+            purchaseId: newPurchase._id.toString(),
+            sessionUrl: session.url
+        });
+
         res.json({success: true, session_url: session.url})
 
     } catch (error) {
         res.json({success: false, message: error.message});
     }
 }
+
+
+
+
+
+
+export const getCompletedCourses = async (req, res) => {
+  try {
+    const { userId } = req.params; 
+    
+    
+    const completedProgress = await CourseProgress.find({
+      userId,
+      completed: true
+    }).select('courseId');
+
+    if (!completedProgress.length) {
+      return res.status(200).json({ courses: [] });
+    }
+
+    // 2. Extract course IDs
+    const courseIds = completedProgress.map(p => p.courseId);
+
+    // 3. Find course details
+    const completedCourses = await Course.find({ _id: { $in: courseIds } });
+
+    // 4. Return result
+    res.status(200).json({ courses: completedCourses });
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
+
+
+

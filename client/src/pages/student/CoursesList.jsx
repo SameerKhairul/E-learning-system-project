@@ -5,7 +5,6 @@ import { useParams } from 'react-router-dom'
 import CourseCard from '../../components/student/CourseCard'
 import { useState } from 'react'
 import { assets } from '../../assets/assets'
-import Footer from '../../components/student/Footer'
 
 
 const CoursesList = () => {
@@ -52,7 +51,6 @@ const CoursesList = () => {
      </div>
      
     </div>
-    <Footer />
     </>
   )
 }
