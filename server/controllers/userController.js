@@ -215,7 +215,7 @@ export const purchaseCourse = async (req, res) => {
         const courseData = await Course.findById(courseId)
 
         if(!userData) {
-            // If user doesn't exist, create one from Clerk data
+            // create one from Clerk data if no user
             try {
                 const clerkUser = await clerkClient.users.getUser(userId)
                 const newUserData = {
